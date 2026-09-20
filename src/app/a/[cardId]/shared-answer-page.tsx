@@ -11,6 +11,7 @@ import {
 } from "@/lib/live-client";
 import type { PublishedAnswer } from "@/lib/live-types";
 import { sentenceCase } from "@/lib/text";
+import { Pill } from "@/components/parts";
 
 type Outcome = "acted" | "still-deciding" | "did-not";
 
@@ -111,9 +112,7 @@ export default function SharedAnswerPage({ cardId }: { cardId: string }) {
       </div>
 
       {answer.illustrative && (
-        <p className="mt-5 rounded-md border border-blocked/30 bg-blocked-soft px-3 py-2.5 text-[0.78rem] leading-5 text-blocked">
-          Illustrative demo answer. Not case evidence and not Aditi&rsquo;s words.
-        </p>
+        <div className="mt-5"><Pill tone="brand">Demo answer</Pill></div>
       )}
 
       <p className="mt-6 text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-faint">Her answer to</p>

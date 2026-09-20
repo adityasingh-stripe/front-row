@@ -212,15 +212,13 @@ export function BriefView({
             </Button>
           </div>
 
-          <p className={`mt-5 rounded-md border px-4 py-3 text-[0.8rem] leading-5 ${
-            draft.illustrative
-              ? "border-blocked/30 bg-blocked-soft text-blocked"
-              : "border-line bg-paper text-muted"
-          }`}>
-            {draft.illustrative
-              ? "Illustrative demo answer. It is not case evidence and not your words. This label will remain on every shared surface."
-              : "Nothing on this page is generated. You write the judgement and it is published without rewriting."}
-          </p>
+          {draft.illustrative ? (
+            <div className="mt-5"><Pill tone="brand">Demo answer</Pill></div>
+          ) : (
+            <p className="mt-5 rounded-md border border-line bg-paper px-4 py-3 text-[0.8rem] leading-5 text-muted">
+              Nothing on this page is generated. You write the judgement and it is published without rewriting.
+            </p>
+          )}
 
           <Field
             id="decision"
@@ -507,9 +505,7 @@ export function AudienceView({
           </h2>
 
           {draft.illustrative && (
-            <p className="mt-4 rounded-md border border-blocked/30 bg-blocked-soft px-3 py-2.5 text-[0.75rem] leading-5 text-blocked">
-              Illustrative demo answer. Not case evidence and not Aditi&rsquo;s words.
-            </p>
+            <div className="mt-4"><Pill tone="brand">Demo answer</Pill></div>
           )}
 
           {draft.decision ? (

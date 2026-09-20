@@ -12,6 +12,37 @@ import { createContext, useContext, type ReactNode } from "react";
 
 const CiteContext = createContext(false);
 
+export function FrontRowMark({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 32 32"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="32" height="32" rx="8" fill="#1d3f6e" />
+      <g fill="#fff" opacity="0.35">
+        <circle cx="11" cy="8" r="1.45" />
+        <circle cx="16" cy="8" r="1.45" />
+        <circle cx="21" cy="8" r="1.45" />
+      </g>
+      <g fill="#fff" opacity="0.6">
+        <circle cx="8.5" cy="14.25" r="1.65" />
+        <circle cx="13.5" cy="14.25" r="1.65" />
+        <circle cx="18.5" cy="14.25" r="1.65" />
+        <circle cx="23.5" cy="14.25" r="1.65" />
+      </g>
+      <g fill="#fff">
+        <circle cx="6" cy="22" r="1.9" />
+        <circle cx="11" cy="22" r="1.9" />
+        <circle cx="16" cy="22" r="1.9" />
+        <circle cx="21" cy="22" r="1.9" />
+        <circle cx="26" cy="22" r="1.9" />
+      </g>
+    </svg>
+  );
+}
+
 export function CiteProvider({ on, children }: { on: boolean; children: ReactNode }) {
   return <CiteContext.Provider value={on}>{children}</CiteContext.Provider>;
 }

@@ -7,6 +7,7 @@ import {
   Cite,
   CiteProvider,
   Eyebrow,
+  FrontRowMark,
   Panel,
   Pill,
   Stat,
@@ -288,7 +289,7 @@ function WorkspaceGate({
     <div className="grid min-h-screen place-items-center px-5 py-10 sm:px-8">
       <main className="w-full max-w-md">
         <div className="mb-8 flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded bg-ink text-[10px] font-bold text-white">FR</span>
+          <FrontRowMark />
           <span className="font-semibold">Front Row</span>
         </div>
         <Panel className="p-6 sm:p-8">
@@ -356,7 +357,7 @@ function Header({
     <header className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-5 py-3 sm:px-8">
         <button type="button" onClick={() => onNavigate("dashboard")} className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded bg-ink text-[10px] font-bold text-white">FR</span>
+          <FrontRowMark className="h-7 w-7" />
           <span className="text-[0.95rem] font-semibold">Front Row</span>
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -596,6 +597,16 @@ function CaptureView({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const useDemoNote = () => {
+    if (!brief.herNote) return;
+    setRoom(brief.room);
+    setInsight(brief.herNote.quote);
+    setMaterial(brief.material.description);
+    setCost("");
+    setWouldDoAgain(null);
+    setError(null);
+  };
+
   const submit = async () => {
     if (!room.trim() || !insight.trim() || !material.trim()) return;
     setSaving(true);
@@ -625,6 +636,16 @@ function CaptureView({
         <p className="mt-3 text-[0.9rem] leading-6 text-muted">
           Front Row can connect the note to repeated questions and available material. It cannot supply the insight.
         </p>
+        {brief.herNote && (
+          <div className="mt-5 flex flex-wrap items-center gap-3 rounded-md border border-brand/20 bg-brand-soft px-4 py-3">
+            <p className="min-w-0 flex-1 text-[0.8rem] leading-5 text-muted">
+              Recording the demo? Fill the case-backed fields in one click.
+            </p>
+            <Button variant="secondary" onClick={useDemoNote} className="shrink-0 px-3 py-2 text-xs">
+              Use demo note
+            </Button>
+          </div>
+        )}
 
         <CaptureField label="Room" value={room} onChange={setRoom} rows={1} />
         <CaptureField
@@ -635,10 +656,10 @@ function CaptureView({
           placeholder={brief.herNote?.quote ? `For this demo, enter: “${brief.herNote.quote}”` : "The line you would tell your sister on the phone"}
         />
         <CaptureField label="Material you left with" value={material} onChange={setMaterial} rows={2} />
-        <CaptureField label="What it cost" value={cost} onChange={setCost} rows={2} placeholder="Money, time, or the thing you gave up" />
+        <CaptureField label="What it cost (optional)" value={cost} onChange={setCost} rows={2} placeholder="Money, time, or the thing you gave up" />
 
         <div className="mt-6">
-          <p className="text-[0.9rem] font-medium">Would you do it again?</p>
+          <p className="text-[0.9rem] font-medium">Would you do it again? <span className="font-normal text-muted">(optional)</span></p>
           <div className="mt-2 flex gap-2">
             {[{ label: "Yes", value: true }, { label: "No", value: false }].map((option) => (
               <button key={option.label} type="button" onClick={() => setWouldDoAgain(option.value)} className={`rounded-md border px-5 py-2 text-sm font-medium ${wouldDoAgain === option.value ? "border-ink bg-ink text-white" : "border-line-strong"}`}>
