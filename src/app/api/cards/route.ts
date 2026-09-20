@@ -1,5 +1,5 @@
 import { createCard, listCards, storageMode } from "@/lib/live-store";
-import { requirePresenter } from "@/lib/admin";
+import { requireCreatorWorkspace } from "@/lib/admin";
 import type { PublishedAnswer } from "@/lib/live-types";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +10,14 @@ function text(value: unknown, max: number): string | null {
   return trimmed.length > 0 && trimmed.length <= max ? trimmed : null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const denied = requireCreatorWorkspace(request);
+  if (denied) return denied;
   return Response.json({ cards: await listCards(), storage: storageMode() });
 }
 
 export async function POST(request: Request) {
-  const denied = requirePresenter(request);
+  const denied = requireCreatorWorkspace(request);
   if (denied) return denied;
   const body = (await request.json()) as Partial<PublishedAnswer>;
   const briefId = text(body.briefId, 80);

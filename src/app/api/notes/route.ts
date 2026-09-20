@@ -1,5 +1,5 @@
 import { answerBriefs } from "@/lib/answers";
-import { requirePresenter } from "@/lib/admin";
+import { requireCreatorWorkspace } from "@/lib/admin";
 import { listNotes, putNote, storageMode } from "@/lib/live-store";
 import type { CreatorNote } from "@/lib/live-types";
 
@@ -11,12 +11,14 @@ function clean(value: unknown, max: number): string | null {
   return trimmed.length > 0 && trimmed.length <= max ? trimmed : null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const denied = requireCreatorWorkspace(request);
+  if (denied) return denied;
   return Response.json({ notes: await listNotes(), storage: storageMode() });
 }
 
 export async function POST(request: Request) {
-  const denied = requirePresenter(request);
+  const denied = requireCreatorWorkspace(request);
   if (denied) return denied;
   const body = (await request.json()) as Partial<CreatorNote>;
   const briefId = clean(body.briefId, 80);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Arrow,
   Button,
@@ -23,6 +23,7 @@ import { answerBriefs, type AnswerBrief } from "@/lib/answers";
 import { editorialQueue, type EditorialCandidate } from "@/lib/editorial";
 import {
   createPublishedAnswer,
+  FrontRowRequestError,
   getNotes,
   getPublishedAnswer,
   getPublishedAnswers,
@@ -36,6 +37,33 @@ import {
 } from "@/lib/live-types";
 
 type View = "dashboard" | "capture" | "brief" | "audience" | "audit";
+type WorkspaceAccess = "checking" | "locked" | "open";
+
+const workspaceKeyStorage = "front-row-workspace-key";
+
+type WorkspaceSnapshot = {
+  notes: CreatorNote[];
+  published: Record<string, PublishedAnswer>;
+  summaries: Record<string, CardSummary>;
+};
+
+async function getWorkspaceSnapshot(workspaceKey: string): Promise<WorkspaceSnapshot> {
+  const [notes, cards] = await Promise.all([
+    getNotes(workspaceKey),
+    getPublishedAnswers(workspaceKey),
+  ]);
+  const published: Record<string, PublishedAnswer> = {};
+  for (const card of cards) {
+    if (!published[card.briefId]) published[card.briefId] = card;
+  }
+  const summaryEntries = await Promise.all(
+    Object.values(published).map(async (card) => {
+      const result = await getPublishedAnswer(card.id);
+      return [card.id, result.summary] as const;
+    }),
+  );
+  return { notes, published, summaries: Object.fromEntries(summaryEntries) };
+}
 
 export default function FrontRowDemo() {
   const [view, setView] = useState<View>("dashboard");
@@ -46,10 +74,12 @@ export default function FrontRowDemo() {
   const [published, setPublished] = useState<Record<string, PublishedAnswer>>({});
   const [summaries, setSummaries] = useState<Record<string, CardSummary>>({});
   const [loading, setLoading] = useState(true);
-  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [presenterToken, setPresenterToken] = useState("");
+  const [workspaceKey, setWorkspaceKey] = useState("");
+  const [workspaceAccess, setWorkspaceAccess] = useState<WorkspaceAccess>("checking");
+  const [accessError, setAccessError] = useState<string | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
 
   const brief = answerBriefs.find((item) => item.id === activeBriefId) ?? answerBriefs[0];
   const note = notes.find((item) => item.briefId === brief.id);
@@ -57,42 +87,56 @@ export default function FrontRowDemo() {
   const card = published[activeBriefId];
   const queue = useMemo(() => editorialQueue(notes), [notes]);
 
-  useEffect(() => {
-    Promise.all([getNotes(), getPublishedAnswers()])
-      .then(async ([storedNotes, cards]) => {
-        setNotes(storedNotes);
-        const latestByBrief: Record<string, PublishedAnswer> = {};
-        for (const item of cards) {
-          if (!latestByBrief[item.briefId]) latestByBrief[item.briefId] = item;
-        }
-        setPublished(latestByBrief);
-        const summaryEntries = await Promise.all(
-          Object.values(latestByBrief).map(async (item) => {
-            const result = await getPublishedAnswer(item.id);
-            return [item.id, result.summary] as const;
-          }),
-        );
-        setSummaries(Object.fromEntries(summaryEntries));
-      })
-      .catch((error) => {
-        setWorkspaceError(error instanceof Error ? error.message : "The shared workspace could not be loaded.");
-      })
-      .finally(() => setLoading(false));
+  const openWorkspace = useCallback((snapshot: WorkspaceSnapshot, key: string) => {
+    setNotes(snapshot.notes);
+    setPublished(snapshot.published);
+    setSummaries(snapshot.summaries);
+    setWorkspaceKey(key);
+    setWorkspaceAccess("open");
+    setAccessError(null);
   }, []);
 
-  const unlockPresenter = (): string | null => {
-    if (presenterToken) return presenterToken;
-    const stored = window.sessionStorage.getItem("front-row-presenter");
-    if (stored) {
-      setPresenterToken(stored);
-      return stored;
+  useEffect(() => {
+    const storedKey = window.sessionStorage.getItem(workspaceKeyStorage)?.trim() ?? "";
+    getWorkspaceSnapshot(storedKey)
+      .then((snapshot) => openWorkspace(snapshot, storedKey))
+      .catch((error) => {
+        window.sessionStorage.removeItem(workspaceKeyStorage);
+        setWorkspaceAccess("locked");
+        if (storedKey || !(error instanceof FrontRowRequestError) || error.status !== 401) {
+          setAccessError(error instanceof Error ? error.message : "The creator workspace could not be opened.");
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [openWorkspace]);
+
+  const unlockWorkspace = async (candidate: string) => {
+    const key = candidate.trim();
+    if (!key) return;
+    setUnlocking(true);
+    setAccessError(null);
+    try {
+      const snapshot = await getWorkspaceSnapshot(key);
+      window.sessionStorage.setItem(workspaceKeyStorage, key);
+      openWorkspace(snapshot, key);
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : "The creator workspace could not be opened.");
+    } finally {
+      setUnlocking(false);
+      setLoading(false);
     }
-    const entered = window.prompt("Enter the Front Row presenter key");
-    if (!entered?.trim()) return null;
-    const token = entered.trim();
-    window.sessionStorage.setItem("front-row-presenter", token);
-    setPresenterToken(token);
-    return token;
+  };
+
+  const lockWorkspace = () => {
+    window.sessionStorage.removeItem(workspaceKeyStorage);
+    setWorkspaceKey("");
+    setNotes([]);
+    setPublished({});
+    setSummaries({});
+    setJudgements({});
+    setView("dashboard");
+    setWorkspaceAccess("locked");
+    setAccessError(null);
   };
 
   const openBrief = (id: string) => {
@@ -102,7 +146,6 @@ export default function FrontRowDemo() {
   };
 
   const openCapture = (id: string) => {
-    if (!unlockPresenter()) return;
     setActiveBriefId(id);
     setView("capture");
   };
@@ -112,8 +155,6 @@ export default function FrontRowDemo() {
       setPublishError("Capture your room note before publishing your judgement.");
       return;
     }
-    const token = unlockPresenter();
-    if (!token) return;
     setPublishing(true);
     setPublishError(null);
     try {
@@ -127,7 +168,7 @@ export default function FrontRowDemo() {
         wouldDoAgain: draft.wouldDoAgain ?? undefined,
         nextStep: draft.nextStep.trim(),
         illustrative: draft.illustrative,
-      }, token);
+      }, workspaceKey);
       setPublished((current) => ({ ...current, [brief.id]: next }));
       setSummaries((current) => ({ ...current, [next.id]: emptySummary }));
       setView("audience");
@@ -139,12 +180,21 @@ export default function FrontRowDemo() {
   };
 
   const capture = async (input: Omit<CreatorNote, "updatedAt">) => {
-    const token = unlockPresenter();
-    if (!token) throw new Error("Unlock creator controls before saving a note.");
-    const saved = await saveNote(input, token);
+    const saved = await saveNote(input, workspaceKey);
     setNotes((current) => [saved, ...current.filter((item) => item.briefId !== saved.briefId)]);
     setView("dashboard");
   };
+
+  if (workspaceAccess !== "open") {
+    return (
+      <WorkspaceGate
+        checking={workspaceAccess === "checking"}
+        error={accessError}
+        opening={unlocking}
+        onOpen={unlockWorkspace}
+      />
+    );
+  }
 
   return (
     <CiteProvider on={citeMode}>
@@ -153,8 +203,7 @@ export default function FrontRowDemo() {
           view={view}
           onNavigate={setView}
           onCapture={() => openCapture(activeBriefId)}
-          presenterUnlocked={Boolean(presenterToken)}
-          onUnlock={unlockPresenter}
+          onLock={workspaceKey ? lockWorkspace : undefined}
           citeMode={citeMode}
           onToggleCite={() => {
             if (citeMode && view === "audit") setView("dashboard");
@@ -170,7 +219,6 @@ export default function FrontRowDemo() {
               published={published}
               summaries={summaries}
               loading={loading}
-              workspaceError={workspaceError}
               onOpenBrief={openBrief}
               onCapture={openCapture}
             />
@@ -218,22 +266,91 @@ export default function FrontRowDemo() {
   );
 }
 
+function WorkspaceGate({
+  checking,
+  error,
+  opening,
+  onOpen,
+}: {
+  checking: boolean;
+  error: string | null;
+  opening: boolean;
+  onOpen: (key: string) => Promise<void>;
+}) {
+  const [key, setKey] = useState("");
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void onOpen(key);
+  };
+
+  return (
+    <div className="grid min-h-screen place-items-center px-5 py-10 sm:px-8">
+      <main className="w-full max-w-md">
+        <div className="mb-8 flex items-center gap-2.5">
+          <span className="grid h-8 w-8 place-items-center rounded bg-ink text-[10px] font-bold text-white">FR</span>
+          <span className="font-semibold">Front Row</span>
+        </div>
+        <Panel className="p-6 sm:p-8">
+          <Eyebrow>Private creator workspace</Eyebrow>
+          <h1 className="mt-3 text-[2rem] font-semibold leading-tight tracking-[-0.035em]">
+            Your audience intelligence, in one place.
+          </h1>
+          {checking ? (
+            <p className="mt-5 text-[0.9rem] text-muted">Opening your workspace…</p>
+          ) : (
+            <>
+              <p className="mt-4 text-[0.9rem] leading-6 text-muted">
+                Enter your workspace key to see your notes, content queue and published-answer activity.
+              </p>
+              <form className="mt-7" onSubmit={submit}>
+                <label htmlFor="workspace-key" className="text-[0.85rem] font-medium">
+                  Workspace key
+                </label>
+                <input
+                  id="workspace-key"
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                  value={key}
+                  onChange={(event) => setKey(event.target.value)}
+                  className="mt-2 w-full rounded-md border border-line-strong bg-surface px-3.5 py-3 text-[0.95rem] outline-none focus:border-brand"
+                />
+                {error && <p role="alert" className="mt-3 text-[0.8rem] text-blocked">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={!key.trim() || opening}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-medium text-white transition hover:bg-brand disabled:cursor-not-allowed disabled:bg-line-strong disabled:text-faint"
+                >
+                  {opening ? "Opening…" : "Open workspace"}
+                </button>
+              </form>
+            </>
+          )}
+        </Panel>
+        <p className="mt-4 text-center text-[0.75rem] leading-5 text-muted">
+          Audience answer links remain public. Your notes and queue stay private.
+        </p>
+      </main>
+    </div>
+  );
+}
+
 function Header({
   view,
   onNavigate,
   onCapture,
   citeMode,
   onToggleCite,
-  presenterUnlocked,
-  onUnlock,
+  onLock,
 }: {
   view: View;
   onNavigate: (view: View) => void;
   onCapture: () => void;
   citeMode: boolean;
   onToggleCite: () => void;
-  presenterUnlocked: boolean;
-  onUnlock: () => string | null;
+  onLock?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
@@ -249,9 +366,11 @@ function Header({
           <Button variant="secondary" onClick={onCapture} className="px-2.5 py-1.5 text-[0.78rem]">
             Capture note
           </Button>
-          <Button variant="ghost" onClick={onUnlock} className="px-2.5 py-1.5 text-[0.78rem]">
-            {presenterUnlocked ? "Presenter unlocked" : "Unlock presenter"}
-          </Button>
+          {onLock && (
+            <Button variant="ghost" onClick={onLock} className="px-2.5 py-1.5 text-[0.78rem]">
+              Lock workspace
+            </Button>
+          )}
           <button
             type="button"
             onClick={onToggleCite}
@@ -283,7 +402,6 @@ function Dashboard({
   published,
   summaries,
   loading,
-  workspaceError,
   onOpenBrief,
   onCapture,
 }: {
@@ -292,7 +410,6 @@ function Dashboard({
   published: Record<string, PublishedAnswer>;
   summaries: Record<string, CardSummary>;
   loading: boolean;
-  workspaceError: string | null;
   onOpenBrief: (id: string) => void;
   onCapture: (id: string) => void;
 }) {
@@ -314,12 +431,6 @@ function Dashboard({
         <span className="font-medium text-blocked">130+ still waiting at 22:15</span>
         <Cite>E-02</Cite>
       </div>
-
-      {workspaceError && (
-        <p className="mt-4 rounded-md border border-blocked/30 bg-blocked-soft px-4 py-3 text-[0.82rem] text-blocked">
-          Shared workspace unavailable: {workspaceError}
-        </p>
-      )}
 
       <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
         <div>

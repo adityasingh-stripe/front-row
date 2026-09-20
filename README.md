@@ -29,7 +29,7 @@ Set the variables listed in `.env.example`:
 
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- `FRONT_ROW_ADMIN_TOKEN`, a private presenter key protecting note and publish mutations
+- `FRONT_ROW_ADMIN_TOKEN`, the private workspace key protecting creator reads and edits
 
 Then build and start:
 
