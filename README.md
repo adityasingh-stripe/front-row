@@ -14,7 +14,46 @@ Front Row helps creators turn repeated audience questions and first-hand insight
 
 The included demo applies this product loop to Aditi's Operation Front Row case. The creator workspace speaks directly to the signed-in creator as "you"; the audience view presents that creator's published judgement.
 
-Historical case evidence and live product activity remain separate. Illustrative judgement is labelled on every surface.
+Historical case evidence and live product activity remain separate.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    creator["Creator<br/>Private workspace"]
+    audience["Audience<br/>Shared answer"]
+
+    subgraph next["Vercel · Next.js"]
+        creatorUI["Creator UI<br/>/"]
+        audienceUI["Audience UI<br/>/a/:cardId"]
+        evidence["Static evidence<br/>and queue logic"]
+        privateAPI["Private route handlers<br/>notes · card list · publish"]
+        publicAPI["Public route handlers<br/>answer · save · forward · outcome"]
+        store["Storage adapter"]
+    end
+
+    redis[("Upstash Redis<br/>live notes · answers · events")]
+    memory[("In-memory store<br/>local development only")]
+
+    creator --> creatorUI
+    creatorUI --> evidence
+    creatorUI -->|"Bearer workspace key"| privateAPI
+    audience --> audienceUI
+    audienceUI --> publicAPI
+    privateAPI --> store
+    publicAPI --> store
+    store -->|"production"| redis
+    store -.->|"development"| memory
+
+    classDef person fill:#eef2f8,stroke:#1d3f6e,color:#16161a,stroke-width:1.5px;
+    classDef surface fill:#ffffff,stroke:#d3d0c9,color:#16161a;
+    classDef data fill:#eaf5ee,stroke:#197a4b,color:#16161a;
+    class creator,audience person;
+    class creatorUI,audienceUI,evidence,privateAPI,publicAPI,store surface;
+    class redis,memory data;
+```
+
+Creator reads and edits pass through the workspace-key check. Audience answers remain public so they can be saved and forwarded. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
 
 ## Local development
 
