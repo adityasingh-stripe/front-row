@@ -20,14 +20,14 @@ Historical case evidence and live product activity remain separate.
 
 ```mermaid
 flowchart LR
-    creator["Creator<br/>Private workspace"]
+    creator["Creator<br/>Workspace"]
     audience["Audience<br/>Shared answer"]
 
     subgraph next["Vercel · Next.js"]
         creatorUI["Creator UI<br/>/"]
         audienceUI["Audience UI<br/>/a/:cardId"]
         evidence["Static evidence<br/>and queue logic"]
-        privateAPI["Private route handlers<br/>notes · card list · publish"]
+        creatorAPI["Creator route handlers<br/>notes · card list · publish"]
         publicAPI["Public route handlers<br/>answer · save · forward · outcome"]
         store["Storage adapter"]
     end
@@ -37,10 +37,10 @@ flowchart LR
 
     creator --> creatorUI
     creatorUI --> evidence
-    creatorUI -->|"Bearer workspace key"| privateAPI
+    creatorUI -->|"Optional workspace key"| creatorAPI
     audience --> audienceUI
     audienceUI --> publicAPI
-    privateAPI --> store
+    creatorAPI --> store
     publicAPI --> store
     store -->|"production"| redis
     store -.->|"development"| memory
@@ -49,11 +49,11 @@ flowchart LR
     classDef surface fill:#ffffff,stroke:#d3d0c9,color:#16161a;
     classDef data fill:#eaf5ee,stroke:#197a4b,color:#16161a;
     class creator,audience person;
-    class creatorUI,audienceUI,evidence,privateAPI,publicAPI,store surface;
+    class creatorUI,audienceUI,evidence,creatorAPI,publicAPI,store surface;
     class redis,memory data;
 ```
 
-Creator reads and edits pass through the workspace-key check. Audience answers remain public so they can be saved and forwarded. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
+Creator reads and edits pass through the workspace-key check unless public demo mode is enabled. Audience answers remain public so they can be saved and forwarded. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
 
 ## Local development
 
@@ -72,7 +72,10 @@ Set the variables listed in `.env.example`:
 
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- `FRONT_ROW_ADMIN_TOKEN`, the private workspace key protecting creator reads and edits
+- `FRONT_ROW_ADMIN_TOKEN`, the workspace key protecting creator reads and edits
+- `FRONT_ROW_PUBLIC_DEMO=1`, bypasses the workspace key for a public judged demo
+
+Public demo mode makes notes and publishing available to anyone with the deployment URL. Leave it unset when the creator workspace should remain private.
 
 Then build and start:
 
