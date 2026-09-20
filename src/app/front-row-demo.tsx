@@ -425,10 +425,9 @@ function Dashboard({
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-line bg-surface px-5 py-3.5 text-[0.82rem]">
-        <span className="font-semibold">Your Tuesday</span>
-        <span className="text-muted">41 unread before 07:00</span>
-        <span className="text-muted">44 answered in one sprint</span>
-        <span className="font-medium text-blocked">130+ still waiting at 22:15</span>
+        <span className="font-semibold">Inbox snapshot · 06:40</span>
+        <span className="text-muted">41 unread messages asking &ldquo;which event was this?&rdquo;</span>
+        <span className="font-medium text-brand">Grouped into one question</span>
         <Cite>E-02</Cite>
       </div>
 
