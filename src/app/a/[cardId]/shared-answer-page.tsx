@@ -11,7 +11,6 @@ import {
 } from "@/lib/live-client";
 import type { PublishedAnswer } from "@/lib/live-types";
 import { sentenceCase } from "@/lib/text";
-import { Pill } from "@/components/parts";
 
 type Outcome = "acted" | "still-deciding" | "did-not";
 
@@ -110,10 +109,6 @@ export default function SharedAnswerPage({ cardId }: { cardId: string }) {
           <p className="text-[0.75rem] text-muted">{answer.room}</p>
         </div>
       </div>
-
-      {answer.illustrative && (
-        <div className="mt-5"><Pill tone="brand">Demo answer</Pill></div>
-      )}
 
       <p className="mt-6 text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-faint">Her answer to</p>
       <h1 className="mt-1.5 text-[1.45rem] font-semibold leading-[1.2] tracking-[-0.02em]">{sentenceCase(answer.question)}</h1>

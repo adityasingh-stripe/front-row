@@ -212,9 +212,7 @@ export function BriefView({
             </Button>
           </div>
 
-          {draft.illustrative ? (
-            <div className="mt-5"><Pill tone="brand">Demo answer</Pill></div>
-          ) : (
+          {!draft.illustrative && (
             <p className="mt-5 rounded-md border border-line bg-paper px-4 py-3 text-[0.8rem] leading-5 text-muted">
               Nothing on this page is generated. You write the judgement and it is published without rewriting.
             </p>
@@ -503,10 +501,6 @@ export function AudienceView({
           <h2 className="mt-1.5 text-[1.35rem] font-semibold leading-[1.25] tracking-[-0.02em]">
             {sentenceCase(brief.questionText)}
           </h2>
-
-          {draft.illustrative && (
-            <div className="mt-4"><Pill tone="brand">Demo answer</Pill></div>
-          )}
 
           {draft.decision ? (
             <>
