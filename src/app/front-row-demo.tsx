@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Arrow,
   Button,
@@ -24,7 +24,6 @@ import { answerBriefs, type AnswerBrief } from "@/lib/answers";
 import { editorialQueue, type EditorialCandidate } from "@/lib/editorial";
 import {
   createPublishedAnswer,
-  FrontRowRequestError,
   getNotes,
   getPublishedAnswer,
   getPublishedAnswers,
@@ -38,9 +37,6 @@ import {
 } from "@/lib/live-types";
 
 type View = "dashboard" | "capture" | "brief" | "audience" | "audit";
-type WorkspaceAccess = "checking" | "locked" | "open";
-
-const workspaceKeyStorage = "front-row-workspace-key";
 
 type WorkspaceSnapshot = {
   notes: CreatorNote[];
@@ -48,11 +44,8 @@ type WorkspaceSnapshot = {
   summaries: Record<string, CardSummary>;
 };
 
-async function getWorkspaceSnapshot(workspaceKey: string): Promise<WorkspaceSnapshot> {
-  const [notes, cards] = await Promise.all([
-    getNotes(workspaceKey),
-    getPublishedAnswers(workspaceKey),
-  ]);
+async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
+  const [notes, cards] = await Promise.all([getNotes(), getPublishedAnswers()]);
   const published: Record<string, PublishedAnswer> = {};
   for (const card of cards) {
     if (!published[card.briefId]) published[card.briefId] = card;
@@ -75,12 +68,9 @@ export default function FrontRowDemo() {
   const [published, setPublished] = useState<Record<string, PublishedAnswer>>({});
   const [summaries, setSummaries] = useState<Record<string, CardSummary>>({});
   const [loading, setLoading] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [workspaceKey, setWorkspaceKey] = useState("");
-  const [workspaceAccess, setWorkspaceAccess] = useState<WorkspaceAccess>("checking");
-  const [accessError, setAccessError] = useState<string | null>(null);
-  const [unlocking, setUnlocking] = useState(false);
 
   const brief = answerBriefs.find((item) => item.id === activeBriefId) ?? answerBriefs[0];
   const note = notes.find((item) => item.briefId === brief.id);
@@ -88,57 +78,18 @@ export default function FrontRowDemo() {
   const card = published[activeBriefId];
   const queue = useMemo(() => editorialQueue(notes), [notes]);
 
-  const openWorkspace = useCallback((snapshot: WorkspaceSnapshot, key: string) => {
-    setNotes(snapshot.notes);
-    setPublished(snapshot.published);
-    setSummaries(snapshot.summaries);
-    setWorkspaceKey(key);
-    setWorkspaceAccess("open");
-    setAccessError(null);
-  }, []);
-
   useEffect(() => {
-    const storedKey = window.sessionStorage.getItem(workspaceKeyStorage)?.trim() ?? "";
-    getWorkspaceSnapshot(storedKey)
-      .then((snapshot) => openWorkspace(snapshot, storedKey))
+    getWorkspaceSnapshot()
+      .then((snapshot) => {
+        setNotes(snapshot.notes);
+        setPublished(snapshot.published);
+        setSummaries(snapshot.summaries);
+      })
       .catch((error) => {
-        window.sessionStorage.removeItem(workspaceKeyStorage);
-        setWorkspaceAccess("locked");
-        if (storedKey || !(error instanceof FrontRowRequestError) || error.status !== 401) {
-          setAccessError(error instanceof Error ? error.message : "The creator workspace could not be opened.");
-        }
+        setWorkspaceError(error instanceof Error ? error.message : "The creator workspace could not be opened.");
       })
       .finally(() => setLoading(false));
-  }, [openWorkspace]);
-
-  const unlockWorkspace = async (candidate: string) => {
-    const key = candidate.trim();
-    if (!key) return;
-    setUnlocking(true);
-    setAccessError(null);
-    try {
-      const snapshot = await getWorkspaceSnapshot(key);
-      window.sessionStorage.setItem(workspaceKeyStorage, key);
-      openWorkspace(snapshot, key);
-    } catch (error) {
-      setAccessError(error instanceof Error ? error.message : "The creator workspace could not be opened.");
-    } finally {
-      setUnlocking(false);
-      setLoading(false);
-    }
-  };
-
-  const lockWorkspace = () => {
-    window.sessionStorage.removeItem(workspaceKeyStorage);
-    setWorkspaceKey("");
-    setNotes([]);
-    setPublished({});
-    setSummaries({});
-    setJudgements({});
-    setView("dashboard");
-    setWorkspaceAccess("locked");
-    setAccessError(null);
-  };
+  }, []);
 
   const openBrief = (id: string) => {
     setActiveBriefId(id);
@@ -169,7 +120,7 @@ export default function FrontRowDemo() {
         wouldDoAgain: draft.wouldDoAgain ?? undefined,
         nextStep: draft.nextStep.trim(),
         illustrative: draft.illustrative,
-      }, workspaceKey);
+      });
       setPublished((current) => ({ ...current, [brief.id]: next }));
       setSummaries((current) => ({ ...current, [next.id]: emptySummary }));
       setView("audience");
@@ -181,21 +132,10 @@ export default function FrontRowDemo() {
   };
 
   const capture = async (input: Omit<CreatorNote, "updatedAt">) => {
-    const saved = await saveNote(input, workspaceKey);
+    const saved = await saveNote(input);
     setNotes((current) => [saved, ...current.filter((item) => item.briefId !== saved.briefId)]);
     setView("dashboard");
   };
-
-  if (workspaceAccess !== "open") {
-    return (
-      <WorkspaceGate
-        checking={workspaceAccess === "checking"}
-        error={accessError}
-        opening={unlocking}
-        onOpen={unlockWorkspace}
-      />
-    );
-  }
 
   return (
     <CiteProvider on={citeMode}>
@@ -204,7 +144,6 @@ export default function FrontRowDemo() {
           view={view}
           onNavigate={setView}
           onCapture={() => openCapture(activeBriefId)}
-          onLock={workspaceKey ? lockWorkspace : undefined}
           citeMode={citeMode}
           onToggleCite={() => {
             if (citeMode && view === "audit") setView("dashboard");
@@ -213,6 +152,11 @@ export default function FrontRowDemo() {
         />
 
         <main>
+          {workspaceError && (
+            <p className="mx-auto mt-6 max-w-6xl rounded-md border border-blocked/30 bg-blocked-soft px-4 py-3 text-[0.82rem] text-blocked">
+              Workspace unavailable: {workspaceError}
+            </p>
+          )}
           {view === "dashboard" && (
             <Dashboard
               queue={queue}
@@ -267,91 +211,18 @@ export default function FrontRowDemo() {
   );
 }
 
-function WorkspaceGate({
-  checking,
-  error,
-  opening,
-  onOpen,
-}: {
-  checking: boolean;
-  error: string | null;
-  opening: boolean;
-  onOpen: (key: string) => Promise<void>;
-}) {
-  const [key, setKey] = useState("");
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    void onOpen(key);
-  };
-
-  return (
-    <div className="grid min-h-screen place-items-center px-5 py-10 sm:px-8">
-      <main className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-2.5">
-          <FrontRowMark />
-          <span className="font-semibold">Front Row</span>
-        </div>
-        <Panel className="p-6 sm:p-8">
-          <Eyebrow>Private creator workspace</Eyebrow>
-          <h1 className="mt-3 text-[2rem] font-semibold leading-tight tracking-[-0.035em]">
-            Your audience intelligence, in one place.
-          </h1>
-          {checking ? (
-            <p className="mt-5 text-[0.9rem] text-muted">Opening your workspace…</p>
-          ) : (
-            <>
-              <p className="mt-4 text-[0.9rem] leading-6 text-muted">
-                Enter your workspace key to see your notes, content queue and published-answer activity.
-              </p>
-              <form className="mt-7" onSubmit={submit}>
-                <label htmlFor="workspace-key" className="text-[0.85rem] font-medium">
-                  Workspace key
-                </label>
-                <input
-                  id="workspace-key"
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                  value={key}
-                  onChange={(event) => setKey(event.target.value)}
-                  className="mt-2 w-full rounded-md border border-line-strong bg-surface px-3.5 py-3 text-[0.95rem] outline-none focus:border-brand"
-                />
-                {error && <p role="alert" className="mt-3 text-[0.8rem] text-blocked">{error}</p>}
-                <button
-                  type="submit"
-                  disabled={!key.trim() || opening}
-                  className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-medium text-white transition hover:bg-brand disabled:cursor-not-allowed disabled:bg-line-strong disabled:text-faint"
-                >
-                  {opening ? "Opening…" : "Open workspace"}
-                </button>
-              </form>
-            </>
-          )}
-        </Panel>
-        <p className="mt-4 text-center text-[0.75rem] leading-5 text-muted">
-          Audience answer links remain public. Your notes and queue stay private.
-        </p>
-      </main>
-    </div>
-  );
-}
-
 function Header({
   view,
   onNavigate,
   onCapture,
   citeMode,
   onToggleCite,
-  onLock,
 }: {
   view: View;
   onNavigate: (view: View) => void;
   onCapture: () => void;
   citeMode: boolean;
   onToggleCite: () => void;
-  onLock?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
@@ -367,11 +238,6 @@ function Header({
           <Button variant="secondary" onClick={onCapture} className="px-2.5 py-1.5 text-[0.78rem]">
             Capture note
           </Button>
-          {onLock && (
-            <Button variant="ghost" onClick={onLock} className="px-2.5 py-1.5 text-[0.78rem]">
-              Lock workspace
-            </Button>
-          )}
           <button
             type="button"
             onClick={onToggleCite}

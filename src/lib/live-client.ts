@@ -7,30 +7,17 @@ import type {
 
 async function json<T>(response: Response): Promise<T> {
   const body = (await response.json()) as T & { error?: string };
-  if (!response.ok) {
-    throw new FrontRowRequestError(
-      body.error ?? "Front Row could not complete that request.",
-      response.status,
-    );
-  }
+  if (!response.ok) throw new Error(body.error ?? "Front Row could not complete that request.");
   return body;
-}
-
-export class FrontRowRequestError extends Error {
-  constructor(message: string, readonly status: number) {
-    super(message);
-    this.name = "FrontRowRequestError";
-  }
 }
 
 export async function createPublishedAnswer(
   answer: Omit<PublishedAnswer, "id" | "createdAt">,
-  workspaceKey: string,
 ): Promise<PublishedAnswer> {
   const result = await json<{ card: PublishedAnswer }>(
     await fetch("/api/cards", {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${workspaceKey}` },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(answer),
     }),
   );
@@ -43,12 +30,9 @@ export async function getPublishedAnswer(cardId: string) {
   );
 }
 
-export async function getPublishedAnswers(workspaceKey: string): Promise<PublishedAnswer[]> {
+export async function getPublishedAnswers(): Promise<PublishedAnswer[]> {
   const result = await json<{ cards: PublishedAnswer[] }>(
-    await fetch("/api/cards", {
-      cache: "no-store",
-      headers: { authorization: `Bearer ${workspaceKey}` },
-    }),
+    await fetch("/api/cards", { cache: "no-store" }),
   );
   return result.cards;
 }
@@ -66,24 +50,20 @@ export async function recordAudienceEvent(
   );
 }
 
-export async function getNotes(workspaceKey: string): Promise<CreatorNote[]> {
+export async function getNotes(): Promise<CreatorNote[]> {
   const result = await json<{ notes: CreatorNote[] }>(
-    await fetch("/api/notes", {
-      cache: "no-store",
-      headers: { authorization: `Bearer ${workspaceKey}` },
-    }),
+    await fetch("/api/notes", { cache: "no-store" }),
   );
   return result.notes;
 }
 
 export async function saveNote(
   note: Omit<CreatorNote, "updatedAt">,
-  workspaceKey: string,
 ): Promise<CreatorNote> {
   const result = await json<{ note: CreatorNote }>(
     await fetch("/api/notes", {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${workspaceKey}` },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(note),
     }),
   );

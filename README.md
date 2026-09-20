@@ -37,7 +37,7 @@ flowchart LR
 
     creator --> creatorUI
     creatorUI --> evidence
-    creatorUI -->|"Optional workspace key"| creatorAPI
+    creatorUI --> creatorAPI
     audience --> audienceUI
     audienceUI --> publicAPI
     creatorAPI --> store
@@ -53,7 +53,7 @@ flowchart LR
     class redis,memory data;
 ```
 
-Creator reads and edits pass through the workspace-key check unless public demo mode is enabled. Audience answers remain public so they can be saved and forwarded. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
+The creator workspace and audience answers are public in this judged demo. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
 
 ## Local development
 
@@ -72,10 +72,8 @@ Set the variables listed in `.env.example`:
 
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- `FRONT_ROW_ADMIN_TOKEN`, the workspace key protecting creator reads and edits
-- `FRONT_ROW_PUBLIC_DEMO=1`, bypasses the workspace key for a public judged demo
 
-Public demo mode makes notes and publishing available to anyone with the deployment URL. Leave it unset when the creator workspace should remain private.
+The judged demo is intentionally public. Anyone with the deployment URL can save notes and publish answers.
 
 Then build and start:
 
