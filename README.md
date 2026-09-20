@@ -18,30 +18,31 @@ Historical case evidence and live product activity remain separate.
 
 ## Architecture
 
+### Current judged demo
+
+The current build proves the creator loop against a fixed case file. It does not claim live platform ingestion.
+
 ```mermaid
 flowchart LR
-    creator["Creator<br/>Workspace"]
-    audience["Audience<br/>Shared answer"]
+    caseFile["Operation Front Row case file<br/>questions · post results · asset ledger"]
+    queue["Static briefs and queue reasoning"]
+    creator["Creator workspace<br/>capture note · prioritise · publish"]
 
     subgraph next["Vercel · Next.js"]
-        creatorUI["Creator UI<br/>/"]
-        audienceUI["Audience UI<br/>/a/:cardId"]
-        evidence["Static evidence<br/>and queue logic"]
-        creatorAPI["Creator route handlers<br/>notes · card list · publish"]
-        publicAPI["Public route handlers<br/>answer · save · forward · outcome"]
+        creatorAPI["Creator routes<br/>notes · card list · publish"]
+        audienceAPI["Audience routes<br/>answer · save · forward · outcome"]
         store["Storage adapter"]
     end
 
-    redis[("Upstash Redis<br/>live notes · answers · events")]
+    redis[("Upstash Redis<br/>notes · answers · audience events")]
     memory[("In-memory store<br/>local development only")]
+    answer["Public answer<br/>/a/:cardId"]
+    audience["Audience"]
 
-    creator --> creatorUI
-    creatorUI --> evidence
-    creatorUI --> creatorAPI
-    audience --> audienceUI
-    audienceUI --> publicAPI
-    creatorAPI --> store
-    publicAPI --> store
+    caseFile --> queue --> creator
+    creator --> creatorAPI --> store
+    store --> answer --> audience
+    audience --> audienceAPI --> store
     store -->|"production"| redis
     store -.->|"development"| memory
 
@@ -49,11 +50,79 @@ flowchart LR
     classDef surface fill:#ffffff,stroke:#d3d0c9,color:#16161a;
     classDef data fill:#eaf5ee,stroke:#197a4b,color:#16161a;
     class creator,audience person;
-    class creatorUI,audienceUI,evidence,creatorAPI,publicAPI,store surface;
+    class caseFile,queue,creatorAPI,audienceAPI,store,answer surface;
     class redis,memory data;
 ```
 
-The creator workspace and audience answers are public in this judged demo. Static case evidence feeds the queue; live notes, published answers and audience events are stored separately.
+### Target product architecture
+
+<p align="center">
+  <img src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram" width="34" height="34" />&nbsp;&nbsp;<strong>Instagram</strong>&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="https://cdn.simpleicons.org/youtube/FF0000" alt="YouTube" width="34" height="34" />&nbsp;&nbsp;<strong>YouTube</strong>&nbsp;&nbsp;&nbsp;&nbsp;
+  <span aria-label="Newsletter">✉️</span>&nbsp;&nbsp;<strong>Newsletter providers</strong>
+</p>
+
+```mermaid
+flowchart LR
+    creator["Creator"]
+
+    subgraph sources["Audience and content sources"]
+        instagram["Instagram<br/>DMs · comments · insights"]
+        youtube["YouTube<br/>comments · analytics"]
+        newsletter["Newsletter providers<br/>replies · opens · clicks"]
+        imports["Import fallback<br/>CSV · pasted messages"]
+    end
+
+    subgraph ingestion["Ingestion layer"]
+        connections["Creator OAuth<br/>source connections"]
+        sync["Webhooks and scheduled sync"]
+        normalise["Normalise · deduplicate<br/>minimise personal data"]
+    end
+
+    postgres[("Postgres<br/>sources · messages · content<br/>clusters · sync cursors")]
+
+    subgraph intelligence["Audience intelligence"]
+        cluster["Semantic clustering<br/>question · volume · recency"]
+        rank["Queue engine<br/>demand · intent · material · readiness"]
+    end
+
+    subgraph product["Front Row · Next.js"]
+        auth["Creator account<br/>session"]
+        workspace["Creator workspace<br/>notes · assets · content queue"]
+        publish["Published answer"]
+        reader["Public audience page"]
+        events["Save · forward · outcome API"]
+    end
+
+    redis[("Redis<br/>live counters · cache")]
+    audience["Audience"]
+
+    creator --> connections
+    creator --> auth --> workspace
+    instagram --> sync
+    youtube --> sync
+    newsletter --> sync
+    imports --> normalise
+    connections --> sync --> normalise --> postgres
+    postgres --> cluster --> rank --> workspace
+    workspace -->|"creator judgement"| postgres
+    workspace --> publish --> reader --> audience
+    audience --> events
+    events --> postgres
+    events --> redis
+    redis --> workspace
+
+    classDef person fill:#eef2f8,stroke:#1d3f6e,color:#16161a,stroke-width:1.5px;
+    classDef source fill:#fdf1e7,stroke:#a84a16,color:#16161a;
+    classDef system fill:#ffffff,stroke:#d3d0c9,color:#16161a;
+    classDef data fill:#eaf5ee,stroke:#197a4b,color:#16161a;
+    class creator,audience person;
+    class instagram,youtube,newsletter,imports source;
+    class connections,sync,normalise,cluster,rank,auth,workspace,publish,reader,events system;
+    class postgres,redis data;
+```
+
+The target diagram is the intended product, not a claim about the current build. Direct connectors require creator consent, provider permissions, sync cursors and deduplication. Import remains the fallback when a platform does not expose the required messages or analytics.
 
 ## Local development
 
