@@ -34,22 +34,22 @@ const reasoning: Record<
   "route-in": {
     recommendation: "Turn the founder interviews into the route into the room.",
     demandSignal: "Readers asked for a route that works outside London and outside tech.",
-    formatSignal: "Her closest published method earned 68K saves.",
+    formatSignal: "Your closest published method earned 68K saves.",
     materialSignal: "Six founder sessions are already in the can.",
     holdingReply: "I have seen the questions about how to get into the room. I am working on the route, not another recap.",
   },
   "backstage-answer": {
     recommendation: "Reconstruct the backstage answer before it disappears again.",
-    demandSignal: "Operators keep asking for her framing, not another event summary.",
-    formatSignal: "One backstage answer is her best-converting format in the issued evidence.",
+    demandSignal: "Operators keep asking for your framing, not another event summary.",
+    formatSignal: "One backstage answer is your best-converting format in the issued evidence.",
     materialSignal: "The original answer was not recorded, so this needs reconstruction rather than editing.",
     holdingReply: "A few of you asked what I would have asked in that room. I am reconstructing the answer.",
   },
   "take-the-offer": {
-    recommendation: "Publish the criteria behind the opportunities she declined.",
-    demandSignal: "Readers want her to narrow a real career choice to one.",
+    recommendation: "Publish the criteria behind the opportunities you declined.",
+    demandSignal: "Readers want you to narrow a real career choice to one.",
     formatSignal: "The refusal post earned 52K saves. It is a trust format, not a direct-conversion format.",
-    materialSignal: "The source post already exists, but her note says career posts can be the wrong room.",
+    materialSignal: "The source post already exists, but your note says career posts can be the wrong room.",
     holdingReply: "I have seen the job-choice questions. I am writing the criteria I use, not choosing on your behalf in a DM.",
   },
   "which-event": {

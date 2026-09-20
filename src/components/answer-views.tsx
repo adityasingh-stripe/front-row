@@ -152,7 +152,7 @@ export function BriefView({
           <div className="mt-7 border-t border-line pt-6">
             <Eyebrow>Your room note</Eyebrow>
             <p className="mt-1.5 text-[0.8rem] leading-5 text-muted">
-              This is entered by Aditi. Front Row does not invent the insight behind the content.
+              You enter this. Front Row does not invent the insight behind your content.
             </p>
 
             {note ? (
@@ -175,7 +175,7 @@ export function BriefView({
                 <p className="text-[0.85rem] leading-6 text-muted">
                   No creator note has been captured for this answer. The issued asset inventory says
                   {" "}&ldquo;{brief.herNote?.quote ?? brief.material.description}&rdquo;, but that does not become
-                  Aditi&rsquo;s product input until she records it.
+                  your product input until you record it.
                 </p>
                 <Button variant="secondary" onClick={onCaptureNote} className="mt-3">
                   Capture the note <Arrow />
@@ -218,8 +218,8 @@ export function BriefView({
               : "border-line bg-paper text-muted"
           }`}>
             {draft.illustrative
-              ? "Illustrative demo answer. It is not case evidence and not Aditi’s words. This label will remain on every shared surface."
-              : "Nothing on this page is generated. Aditi writes the judgement and it is published without rewriting."}
+              ? "Illustrative demo answer. It is not case evidence and not your words. This label will remain on every shared surface."
+              : "Nothing on this page is generated. You write the judgement and it is published without rewriting."}
           </p>
 
           <Field
@@ -612,8 +612,8 @@ export function AudienceView({
             </>
           ) : (
             <p className="mt-6 rounded-md border border-dashed border-line-strong p-5 text-[0.85rem] leading-6 text-muted">
-              Nothing published yet. Aditi writes the answer on the brief, and it appears here
-              exactly as she wrote it.
+              Nothing published yet. Write the answer on the brief and it will appear here exactly
+              as you wrote it.
             </p>
           )}
         </PhoneFrame>

@@ -193,7 +193,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
       ref: "E-03.3",
       text: "Your cost breakdown converted 611 people from 890K views. Your Cannes recap converted 62 from 3.9M.",
     },
-    pressure: "A real budget decision aligns with an honest-cost format and material she already has.",
+    pressure: "A real budget decision aligns with an honest-cost format and material you already have.",
     judgement: {
       decision: null, cost: null, aditiRating: null, personalNote: null,
       wouldDoAgain: null, criteria: null, nextStep: null,
@@ -208,7 +208,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
     persona: "operator",
     room: "Backstage Q&A after the founder session",
     format: "single-answer",
-    material: { ref: "E-04.5", description: "The answer she rates highest", status: "Unrecorded, gone" },
+    material: { ref: "E-04.5", description: "The answer you rate highest", status: "Unrecorded, gone" },
     demand: [
       { ref: "E-01.9", quote: "I want to build in public without annoying my employer. How do you decide what to post?" },
     ],
@@ -218,7 +218,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
       text: "One answer given to one person converted 806 people from 320K views: your best of the year, off the smallest reach in the set.",
     },
     pressure:
-      "One of the four questions she says she keeps answering. Her highest-converting format, and the original was never recorded.",
+      "One of the four questions you keep answering. Your highest-converting format, and the original was never recorded.",
     judgement: {
       decision: null, cost: null, aditiRating: null, personalNote: null,
       wouldDoAgain: null, criteria: null, nextStep: null,
@@ -256,7 +256,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
     question: "would-you-take-it",
     questionText: "would you take this job?",
     persona: "climber",
-    room: "The opportunities she said no to this year",
+    room: "The opportunities I said no to this year",
     format: "refusal-list",
     material: { ref: "E-03.5", description: "The opportunities I said no to this year", status: "Published, 0 direct conversions, high trust" },
     demand: [
@@ -271,7 +271,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
       text: "Your refusal list earned 52K saves and nought sign-ups. It builds trust and converts nobody directly, so make it for the trust.",
     },
     pressure:
-      "They are not asking for a framework. They want the choice narrowed to one, which she cannot do at scale until her criteria are written down.",
+      "They are not asking for a framework. They want the choice narrowed to one, which you cannot do at scale until your criteria are written down.",
     judgement: {
       decision: null, cost: null, aditiRating: null, personalNote: null,
       wouldDoAgain: null, criteria: null, nextStep: null,
@@ -294,7 +294,7 @@ export const answerBriefs: readonly AnswerBrief[] = [
     herNote: { ref: "E-04.7", quote: "there is one of me" },
     formatEvidence: {
       ref: "E-02",
-      text: "41 messages of this shape were waiting before 07:00 on an ordinary Tuesday. It is the highest-volume question and contains little of the judgement people trust her for. Answer it once rather than one DM at a time.",
+      text: "41 messages of this shape were waiting before 07:00 on an ordinary Tuesday. It is the highest-volume question and contains little of the judgement people trust you for. Answer it once rather than one DM at a time.",
     },
     pressure: "Highest volume, low judgement. Acknowledge it once without spending the next content slot on it.",
     judgement: {

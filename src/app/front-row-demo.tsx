@@ -109,7 +109,7 @@ export default function FrontRowDemo() {
 
   const publish = async () => {
     if (!note) {
-      setPublishError("Capture Aditi’s room note before publishing her judgement.");
+      setPublishError("Capture your room note before publishing your judgement.");
       return;
     }
     const token = unlockPresenter();
@@ -308,7 +308,7 @@ function Dashboard({
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-line bg-surface px-5 py-3.5 text-[0.82rem]">
-        <span className="font-semibold">Her actual Tuesday</span>
+        <span className="font-semibold">Your Tuesday</span>
         <span className="text-muted">41 unread before 07:00</span>
         <span className="text-muted">44 answered in one sprint</span>
         <span className="font-medium text-blocked">130+ still waiting at 22:15</span>
@@ -355,7 +355,7 @@ function Dashboard({
               {topNote ? (
                 <Button onClick={() => onOpenBrief(top.brief.id)}>Open the answer <Arrow /></Button>
               ) : (
-                <Button onClick={() => onCapture(top.brief.id)}>Capture Aditi&rsquo;s insight <Arrow /></Button>
+                <Button onClick={() => onCapture(top.brief.id)}>Capture your insight <Arrow /></Button>
               )}
               <Button variant="secondary" onClick={() => copyHoldingReply(top)}>
                 {copied === top.brief.id ? "Copied" : "Copy holding reply"}
@@ -366,20 +366,20 @@ function Dashboard({
             </p>
           </div>
           <div className="border-t border-line bg-paper p-6 sm:p-8 lg:border-l lg:border-t-0">
-            <Eyebrow>Aditi&rsquo;s note</Eyebrow>
+            <Eyebrow>Your note</Eyebrow>
             {topNote ? (
               <>
                 <blockquote className="mt-4 text-[1.15rem] font-medium leading-7">&ldquo;{topNote.insight}&rdquo;</blockquote>
                 <dl className="mt-6 space-y-4 text-[0.82rem]">
                   <SmallFact label="Room" value={topNote.room} />
                   <SmallFact label="Material" value={topNote.material} />
-                  <SmallFact label="Would she do it again?" value={topNote.wouldDoAgain === null ? "Not recorded" : topNote.wouldDoAgain ? "Yes" : "No"} />
+                  <SmallFact label="Would you do it again?" value={topNote.wouldDoAgain === null ? "Not recorded" : topNote.wouldDoAgain ? "Yes" : "No"} />
                 </dl>
               </>
             ) : (
               <div className="mt-4 rounded-md border border-dashed border-line-strong p-4">
                 <p className="text-[0.88rem] leading-6 text-muted">
-                  The issued file contains a useful quote, but Front Row will not silently turn it into product input. Aditi records the insight herself.
+                  The issued file contains a useful quote, but Front Row will not silently turn it into product input. You record the insight yourself.
                 </p>
               </div>
             )}
@@ -464,7 +464,7 @@ function SmallFact({ label, value }: { label: string; value: string }) {
 function actionLabel(action: EditorialCandidate["action"]): string {
   if (action === "reconstruct") return "Reconstruct the lost judgement";
   if (action === "acknowledge") return "Acknowledge once, do not make next";
-  return "Needs Aditi’s insight";
+  return "Needs your insight";
 }
 
 function CaptureView({
