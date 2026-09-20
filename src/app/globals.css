@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/*
+  Editorial, not dossier.
+  The first palette borrowed the case file's own design language (stamp red,
+  cream, dense mono tracking), which is why the product read as a case file.
+  Aditi is Head of New Media at a tech title. This should look like something
+  she would put her name on.
+*/
+
+@theme {
+  --color-paper: #faf9f7;
+  --color-surface: #ffffff;
+  --color-ink: #16161a;
+  --color-ink-soft: #3d3d45;
+  --color-muted: #6e6e78;
+  --color-faint: #9a9aa4;
+  --color-line: #e5e3de;
+  --color-line-strong: #d3d0c9;
+
+  /* Interactive and brand. */
+  --color-brand: #1d3f6e;
+  --color-brand-soft: #eef2f8;
+
+  /* Semantics: acted, still deciding / blocked. */
+  --color-acted: #197a4b;
+  --color-acted-soft: #eaf5ee;
+  --color-blocked: #a84a16;
+  --color-blocked-soft: #fdf1e7;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/*
+  These MUST stay inside @layer base.
+
+  Unlayered CSS outranks every layered rule in the cascade, so writing these at
+  the top level silently beat all of Tailwind's utilities: `color: inherit` on
+  button killed every `text-white` (black text on a black button), and `font:
+  inherit` is a shorthand that also resets font-size and font-weight, so every
+  `text-[0.78rem]` on a button was discarded too. Inside @layer base the
+  utilities layer wins, which is what we want.
+*/
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--color-paper);
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Font family only. Never the `font` shorthand, and never `color`. */
+  button,
+  textarea,
+  input {
+    font-family: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:focus-visible,
+  textarea:focus-visible,
+  input:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-brand);
+    color: #fff;
+  }
+}
+
+@layer utilities {
+  /* Tabular figures wherever one number is compared against another. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
